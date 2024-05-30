@@ -4,6 +4,7 @@ import { collection, addDoc, getDocs, updateDoc, doc, deleteDoc } from "firebase
 
 const CardapioPanel = ({ onAddMenuItem, onEditMenuItem, onDeleteMenuItem }) => {
   const [newItem, setNewItem] = useState({
+    id: '',
     title: '',
     description: '',
     price: 0,
@@ -32,6 +33,11 @@ const CardapioPanel = ({ onAddMenuItem, onEditMenuItem, onDeleteMenuItem }) => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    console.log('ID PRODUTO', newItem.id)
+    if (newItem.id != '') {
+        handleSaveEditedItem(newItem.id);
+        return
+    }
     addDoc(collection(db, "cardapio"), newItem)
       .then(() => {
         console.log('Item adicionado com sucesso!');
@@ -206,6 +212,7 @@ const CardapioPanel = ({ onAddMenuItem, onEditMenuItem, onDeleteMenuItem }) => {
                                                       </div>
                                                      <br />                                                  
                                                       <button type="submit" class="btn btn-primary">Adicionar Item</button>
+                                                      <button type="submit" class="btn btn-primary" onClick={() => handleSaveEditedItem(newItem.id)}>Confirmar</button>
                                                     </form> 
                                                  
                                               </div>

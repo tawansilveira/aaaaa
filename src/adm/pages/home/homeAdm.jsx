@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { FaCartPlus, FaHeart } from 'react-icons/fa';
 import { db } from '../../../services/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, doc, getDocs } from 'firebase/firestore';
 import './scripts.js';
 import './stylesa.css'
 
@@ -25,12 +25,50 @@ const Pedidos = () => {
     const getPedidos = async () => {
       const querySnapshot = await getDocs(collection(db, 'orders'));
       const fetchedItems = querySnapshot.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
+        ...doc.data()
       }));
+      console.log('ITEM TESTE: ', JSON.stringify(fetchedItems))
+
+      const fetchedProducs = fetchedItems.forEach((element) => {
+        console.log('ELEMENTO', JSON.stringify(element))
+
+        element.items.map((item) => {
+          console.log('TESTE MALUCO 3341 >> ', item.productId)
+
+          
+        })
+      })
       setItems(fetchedItems);
     };
 
+
+    const a = {
+      idPedido: 'ASDASDASDASDASD',
+      statusPedido: 'Pendente',
+      orderNumber: 1234,
+      resumoPedido: [{
+        productId: '1123123123',
+        productName: 'Batata Frita',
+        quantidade: 2
+      },
+      {
+        productId: '1123123123',
+        productName: 'Batata Frita',
+        quantidade: 2
+      },
+      {
+        productId: '1123123123',
+        productName: 'Batata Frita',
+        quantidade: 2
+      },
+      {
+        productId: '1123123123',
+        productName: 'Batata Frita',
+        quantidade: 2
+      }
+    ]
+    }
+    
     getPedidos();
   }, []);
 
@@ -116,12 +154,16 @@ const Pedidos = () => {
                                 </div>
                                 
                                 <div class="card-body">
-                                {items.map((item) => (
+                                {a.map((item) => (
         <div key={item.id} className="order-box">
           <div className="order-details">
             <p>Número do Pedido: {item.orderNumber}</p>
             <p>Status: {item.status}</p>
             <p>Resumo do pedido: </p>
+            {item.items.map((prod) => {
+              {console.log(prod.productId)}
+              
+            })}
           </div>
           <button
             className="confirm-receipt-button"
