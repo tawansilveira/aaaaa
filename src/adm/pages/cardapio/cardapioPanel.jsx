@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../../services/firebase';
 import { collection, addDoc, getDocs, updateDoc, doc, deleteDoc } from "firebase/firestore";
 
-const AdminPanel = ({ onAddMenuItem, onEditMenuItem, onDeleteMenuItem }) => {
+const CardapioPanel = ({ onAddMenuItem, onEditMenuItem, onDeleteMenuItem }) => {
   const [newItem, setNewItem] = useState({
     title: '',
     description: '',
@@ -43,11 +43,14 @@ const AdminPanel = ({ onAddMenuItem, onEditMenuItem, onDeleteMenuItem }) => {
   };
 
   const handleEditItem = (item) => {
-    setNewItem(item);
+    // Create a copy of the item object to avoid mutation
+    const itemToUpdate = { ...item };
+    setNewItem(itemToUpdate);
   };
+  
 
   const handleSaveEditedItem = (itemId) => {
-    const updatedItem = { ...newItem };
+    const updatedItem = { ...newItem }; // Use the updated newItem state
     updateDoc(doc(db, "cardapio", itemId), updatedItem)
       .then(() => {
         console.log('Item atualizado com sucesso!');
@@ -57,6 +60,7 @@ const AdminPanel = ({ onAddMenuItem, onEditMenuItem, onDeleteMenuItem }) => {
         console.error('Falha ao atualizar item:', error);
       });
   };
+  
 
   const handleDeleteItem = (itemId) => {
     deleteDoc(doc(db, "cardapio", itemId))
@@ -103,12 +107,13 @@ const AdminPanel = ({ onAddMenuItem, onEditMenuItem, onDeleteMenuItem }) => {
             <div className="item-details">
               <h4>{item.title}</h4>
               <p>{item.description}</p>
-              <p>R$ {item.price.toFixed()}
+              <p>R$ {parseFloat(item.price).toFixed(2)}
                               </p>
                               </div>
                               <div className="item-actions">
                                 <button onClick={() => handleEditItem(item)}>Editar</button>
                                 <button onClick={() => handleDeleteItem(item.id)}>Excluir</button>
+                                <button onClick={() => handleSaveEditedItem(item.id)}>Confirmar Edição</button>
                               </div>
                             </li>
                           ))}
@@ -117,5 +122,5 @@ const AdminPanel = ({ onAddMenuItem, onEditMenuItem, onDeleteMenuItem }) => {
                     );
                   };
                   
-                  export default AdminPanel;
+                  export default CardapioPanel;
                   

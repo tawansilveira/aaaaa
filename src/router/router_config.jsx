@@ -8,8 +8,9 @@ import ProductCards from "../pages/cart/cart";
 import CartProvider from "../contexts/cart_provider";
 import Contato from '../pages/contato/contato';
 import LoginAdm from '../adm/pages/login/loginAdm';
-import HomePageAdm from '../adm/pages/home/homeAdm';
 import CardapioAdm from '../adm/pages/cardapio/cardapioAdm';
+import Pedidos from '../adm/pages/home/homeAdm';
+
 
 const RouterConfig = createBrowserRouter([
     {
@@ -22,8 +23,10 @@ const RouterConfig = createBrowserRouter([
             { path: '/contato', element:<Contato/> },
             { path: '*', element: <h1>404 - Página não encontrada</h1>},
             { path: '/adm', element:<LoginAdm/>},
-            { path: '/homeAdm', element:<HomePageAdm/>},
-            { path: '/cardapioAdm', element:<CardapioAdm/>}
+            { path: '/cardapioAdm', element:<CardapioAdm/>},
+            { path: '/homeAdm', element:<Pedidos/>},
+
+
         ]
     },
 ]);

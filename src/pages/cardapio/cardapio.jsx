@@ -66,7 +66,7 @@ const Cardapio = () => {
                     </div>
                     <div className="d-flex justify-content-between align-items-center p-3">
                       <h6 className="card-subtitle text-muted">
-                        <span className="text-success">R$ {item.price.toFixed(2)}</span>
+                        <span className="text-success">R$ {parseFloat(item.price).toFixed(2)}</span>
                       </h6>
                       <FaCartPlus
                         size={24}
