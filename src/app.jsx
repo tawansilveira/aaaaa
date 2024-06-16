@@ -14,6 +14,8 @@ const App = () => {
         <Route path="/carrinho" element={<NavBar />} />
         <Route path="/cardapio" element={<NavBar />} />
         <Route path="/register" element={<NavBar />} />
+        <Route path="/confirmation" element={<NavBar />} />
+
       </Routes>
       <Outlet />  {/* Outlet para rotas aninhadas dentro do layout apropriado */}
       <Routes>

@@ -33,7 +33,9 @@ export default function ProductCards() {
       items: productsCart.map((item) => ({
           productId: item.product.id,
           quantity: item.qtdCarrinho,
+          title: item.product.title
       })),
+      total: calcularTotal(),
       orderNumber: generateUniqueID(),
       status: 'pendente', // Initial order status (e.g., "pending")
     };
