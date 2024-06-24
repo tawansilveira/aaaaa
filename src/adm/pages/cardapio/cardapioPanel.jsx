@@ -156,6 +156,10 @@ const CardapioPanel = ({ onAddMenuItem, onEditMenuItem, onDeleteMenuItem }) => {
                                               <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
                                               Cardápio
                                           </a>
+                                          <a className="nav-link" href="historico">
+                                              <div className="sb-nav-link-icon"><i className="fas fa-history"></i></div>
+                                              Histórico
+                                          </a>
                                       </div>
                                   </div>
                                   <div class="sb-sidenav-footer">

@@ -59,7 +59,7 @@ const Register = () => {
     const navigate = useNavigate();
 
     if (success) {
-        navigate('/login');
+        navigate('/cardapio');
     }
 
     return (

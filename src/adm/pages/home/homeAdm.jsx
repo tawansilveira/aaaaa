@@ -1,12 +1,15 @@
-import React, {useState, useEffect, useContext} from 'react';
-import {FaCartPlus, FaHeart} from 'react-icons/fa';
-import {db} from '../../../services/firebase';
-import {collection, doc, getDocs} from 'firebase/firestore';
+// Pedidos.js
+import React, { useState, useEffect } from 'react';
+import { FaCartPlus, FaHeart } from 'react-icons/fa';
+import { db, auth } from '../../../services/firebase'; // Ensure you have auth configured in your firebase service
+import { collection, doc, getDocs, addDoc, updateDoc } from 'firebase/firestore';
+import { signOut } from 'firebase/auth'; // Import signOut from firebase/auth
 import './scripts.js';
-import './stylesa.css'
+import './stylesa.css';
 
 const Pedidos = () => {
     const [items, setItems] = useState([]);
+    const [ongoingItems, setOngoingItems] = useState([]);
     const [hoveredItems, setHoveredItems] = useState([]);
 
     const handleMouseEnter = (itemId) => {
@@ -23,184 +26,224 @@ const Pedidos = () => {
 
     useEffect(() => {
         const getPedidos = async () => {
-            const querySnapshot = await getDocs(collection(db, "orders"));
-            const fetchedItems = querySnapshot.docs.map((doc) => ({
-                ...doc.data()
-            }));
-
-            setItems(fetchedItems);
+            try {
+                const querySnapshot = await getDocs(collection(db, "orders"));
+                const fetchedItems = querySnapshot.docs.map((doc) => ({
+                    ...doc.data(),
+                    id: doc.id,
+                }));
+    
+                // Separate items based on their status
+                const newItems = fetchedItems.filter(item => item.status !== 'Finalizado');
+                const ongoingItems = fetchedItems.filter(item => item.status === 'Em Andamento');
+    
+                setItems(newItems);
+                setOngoingItems(ongoingItems);
+            } catch (error) {
+                console.error("Error fetching orders: ", error);
+            }
         };
-
+    
         getPedidos();
     }, []);
+    
 
-    const mockItem = [{
-        orderId: 'abc123',
-        orderNumber: 1234,
-        status: 'pendente',
-        total: 24.22,
-        items: [
-            {
-                productId: 'abc123',
-                name: 'Refrigerante Lata',
-                productQuantity: 2,
+const handleConfirmReceipt = async (orderId) => {
+    try {
+        // Update the status in Firestore
+        const orderDoc = doc(db, "orders", orderId);
+        await updateDoc(orderDoc, { status: 'Em Andamento' });
+
+        // Update the local state
+        setItems((prevItems) => prevItems.filter((item) => item.id !== orderId));
+        const item = items.find((item) => item.id === orderId);
+        setOngoingItems((prevOngoingItems) => [...prevOngoingItems, { ...item, status: 'Em Andamento' }]);
+    } catch (error) {
+        console.error("Error updating order status: ", error);
+    }
+};
+
+
+    const handleFinalizeOrder = async (orderId) => {
+        setOngoingItems((prevOngoingItems) => {
+            const item = prevOngoingItems.find((item) => item.id === orderId);
+            if (item) {
+                // Add the item to the "histórico" collection in Firestore
+                addDoc(collection(db, "historico"), item);
+
+                // Remove the item from ongoingItems
+                return prevOngoingItems.filter((item) => item.id !== orderId);
             }
-        ]
-    }]
+            return prevOngoingItems;
+        });
 
-    const handleConfirmReceipt = (orderId) => {
-        // Implement logic to update the order status in Firestore to "Received"
-        console.log(`Confirming receipt for order ${orderId}`);
+        try {
+            // Remove the item from "orders" collection in Firestore
+            const orderDoc = doc(db, "orders", orderId);
+            await updateDoc(orderDoc, { status: 'Finalizado' });
+        } catch (error) {
+            console.error("Error finalizing order: ", error);
+        }
+
+        console.log(`Finalizing order ${orderId}`);
+    };
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            // Redirect to login or home page after logout
+            window.location.href = "/adm"; // Adjust the path as needed
+        } catch (error) {
+            console.error("Error logging out: ", error);
+        }
     };
 
     return (
-        /*<div>
-          <h2>Pedidos</h2>
-          {items.map((item) => (
-            <div key={item.id} className="order-box">
-              <div className="order-details">
-                <p>Número do Pedido: {item.orderNumber}</p>
-                <p>Status: {item.status}</p>
-                <p>Resumo do pedido: </p>
-                {/* Add more details as needed *}
-              </div>
-              <button
-                className="confirm-receipt-button"
-                onClick={() => handleConfirmReceipt(item.id)}
-                disabled={item.status === 'Recebido'} // Disable if already received
-              >
-                Confirmar Recebimento
-              </button>
-            </div>
-          ))}
-        </div>*/
-
-        <body class="sb-nav-fixed">
-                      <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
-                          <a href="index.html">Barriga Lanches</a>
-                          <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
-                              <li class="nav-item dropdown">
-                                  <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-user fa-fw"></i></a>
-                                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                      <li><a class="dropdown-item" href="#!">Configurações</a></li>
-                                      <li><hr class="dropdown-divider" /></li>
-                                      <li><a class="dropdown-item" href="adm">Sair</a></li>
-                                  </ul>
-                              </li>
-                          </ul>
-                      </nav>
-        <div id="layoutSidenav">
-            <div id="layoutSidenav_nav">
-                <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
-                    <div class="sb-sidenav-menu">
-                        <div class="nav">
-                            <div class="sb-sidenav-menu-heading">Menu</div>
-                            <a class="nav-link" href="homeAdm">
-                                <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
-                                Pedidos
-                            </a>
-                            <a class="nav-link" href="cardapioAdm">
-                                <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
-                                Cardápio
-                            </a>
+        <body className="sb-nav-fixed">
+            <nav className="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+                <a href="index.html">Barriga Lanches</a>
+                <ul className="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
+                    <li className="nav-item dropdown">
+                        <a className="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i className="fas fa-user fa-fw"></i></a>
+                        <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a className="dropdown-item" href="#!">Configurações</a></li>
+                            <li><hr className="dropdown-divider" /></li>
+                            <li><a className="dropdown-item" href="#!" onClick={handleLogout}>Sair</a></li> {/* Add onClick for logout */}
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+            <div id="layoutSidenav">
+                <div id="layoutSidenav_nav">
+                    <nav className="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+                        <div className="sb-sidenav-menu">
+                            <div className="nav">
+                                <div className="sb-sidenav-menu-heading">Menu</div>
+                                <a className="nav-link" href="homeAdm">
+                                    <div className="sb-nav-link-icon"><i className="fas fa-tachometer-alt"></i></div>
+                                    Pedidos
+                                </a>
+                                <a className="nav-link" href="cardapioAdm">
+                                    <div className="sb-nav-link-icon"><i className="fas fa-columns"></i></div>
+                                    Cardápio
+                                </a>
+                                <a className="nav-link" href="historico">
+                                    <div className="sb-nav-link-icon"><i className="fas fa-history"></i></div>
+                                    Histórico
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                    <div class="sb-sidenav-footer">
-                        <div class="small">Logado como:</div>
-                        Barriga Lanches
-                    </div>
-                </nav>
-            </div>
-            <div id="layoutSidenav_content">
-                <main>
-                    <div class="container-fluid px-4">
-                        <h1 class="mt-4">Pedidos</h1>
-                        <ol class="breadcrumb mb-4">
-                            <li class="breadcrumb-item active">Dashboard</li>
-                        </ol>
-                        <div class="row">
-                            <div class="col-xl-4 col-md-6">
-                                <div class="card mb-4">
-                                    <div class="card-header">
-                                        <i class="fas fa-chart-area me-1"></i>
-                                        Pedidos novos
-                                    </div>
+                        <div className="sb-sidenav-footer">
+                            <div className="small">Logado como:</div>
+                            Barriga Lanches
+                        </div>
+                    </nav>
+                </div>
+                <div id="layoutSidenav_content">
+                    <main>
+                        <div className="container-fluid px-4">
+                            <h1 className="mt-4">Pedidos</h1>
+                            <ol className="breadcrumb mb-4">
+                            <li className="breadcrumb-item active">Dashboard</li>
+                            </ol>
+                            <div className="row">
+                                <div className="col-xl-4 col-md-6">
+                                    <div className="card mb-4">
+                                        <div className="card-header">
+                                            <i className="fas fa-chart-area me-1"></i>
+                                            Pedidos novos
+                                        </div>
 
-                                    <div class="card-body">
-                                        {items.map((item) => (
-                                            <div key={item.id} className="order-box">
-                                                {console.log(JSON.stringify(item))}
-                                                <div key={item.orderId}>  {/* Key prop for each order */}
-                                                    <p>Número do Pedido: {item.orderNumber}</p>
-                                                    <p>Status: {item.status}</p>
-                                                    <p>Total: R$ {item.total}</p>  {/* Formatted total */}
-                                                    <p>Resumo do pedido: </p>
-                                                    <ol className="list-group">
-                                                        {item.items.map((product) => (
-                                                            <li className="list-group-item d-flex justify-content-between align-items-start">
-                                                                <div className="ms-2 me-auto">
-                                                                    {product.title}
-                                                                </div>
-                                                                <span
-                                                                    className="badge bg-primary rounded-pill">{product.quantity}</span>
-                                                            </li>
-                                                        ))}
-                                                    </ol>
+                                        <div className="card-body">
+                                            {items.map((item) => (
+                                                <div key={item.id} className="order-box">
+                                                    <div key={item.orderId}> {/* Key prop for each order */}
+                                                        <p>Número do Pedido: {item.orderNumber}</p>
+                                                        <p>Status: {item.status}</p>
+                                                        <p>Total: R$ {item.total}</p> {/* Formatted total */}
+                                                        <p>Resumo do pedido: </p>
+                                                        <ol className="list-group">
+                                                            {item.items.map((product) => (
+                                                                <li key={product.productId} className="list-group-item d-flex justify-content-between align-items-start">
+                                                                    <div className="ms-2 me-auto">
+                                                                        {product.title}
+                                                                    </div>
+                                                                    <span className="badge bg-primary rounded-pill">{product.quantity}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ol>
+                                                    </div>
+                                                    <br />
+                                                    <button
+                                                        className="confirm-receipt-button"
+                                                        onClick={() => handleConfirmReceipt(item.id)}
+                                                        disabled={item.status === 'Recebido' || item.status === 'Em Andamento'} // Disable if already received or in progress
+                                                    >
+                                                        Confirmar Recebimento
+                                                    </button>
+                                                    <hr />
+                                                    <hr />
                                                 </div>
-                                                <br/>
-                                                <button
-                                                    className="confirm-receipt-button"
-                                                    onClick={() => handleConfirmReceipt(item.id)}
-                                                    disabled={item.status === 'Recebido'} // Disable if already received
-                                                >
-                                                    Confirmar Recebimento
-                                                </button>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-xl-4 col-md-6">
-                                <div class="card mb-4">
-                                    <div class="card-header">
-                                        <i class="fas fa-chart-bar me-1"></i>
-                                        Pedidos em andamento
-                                    </div>
-                                    <div class="card-body">
-
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-md-6">
-                                <div class="card mb-4">
-                                    <div class="card-header">
-                                        <i class="fas fa-chart-bar me-1"></i>
-                                        Pedidos Entregues
-                                    </div>
-                                    <div class="card-body">
-
+                                <div className="col-xl-4 col-md-6">
+                                    <div className="card mb-4">
+                                        <div className="card-header">
+                                            <i className="fas fa-chart-bar me-1"></i>
+                                            Pedidos em andamento
+                                        </div>
+                                        <div className="card-body">
+                                            {ongoingItems.map((item) => (
+                                                <div key={item.id} className="order-box">
+                                                    <div key={item.orderId}> {/* Key prop for each order */}
+                                                        <p>Número do Pedido: {item.orderNumber}</p>
+                                                        <p>Status: {item.status}</p>
+                                                        <p>Total: R$ {item.total}</p> {/* Formatted total */}
+                                                        <p>Resumo do pedido: </p>
+                                                        <ol className="list-group">
+                                                            {item.items.map((product) => (
+                                                                <li key={product.productId} className="list-group-item d-flex justify-content-between align-items-start">
+                                                                    <div className="ms-2 me-auto">
+                                                                        {product.title}
+                                                                    </div>
+                                                                    <span className="badge bg-primary rounded-pill">{product.quantity}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ol>
+                                                    </div>
+                                                    <br />
+                                                    <button
+                                                        className="finalize-order-button"
+                                                        onClick={() => handleFinalizeOrder(item.id)}
+                                                    >
+                                                        Finalizar
+                                                    </button>
+                                                    <hr />
+                                                    <hr />
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </main>
+                    </main>
+                </div>
             </div>
-        </div>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
-                crossorigin="anonymous"></script>
-        <script src="js/scripts.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"
-                crossorigin="anonymous"></script>
-        <script src="assets/demo/chart-area-demo.js"></script>
-        <script src="assets/demo/chart-bar-demo.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"
-                crossorigin="anonymous"></script>
-        <script src="js/datatables-simple-demo.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+            <script src="js/scripts.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
+            <script src="assets/demo/chart-area-demo.js"></script>
+            <script src="assets/demo/chart-bar-demo.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
+            <script src="js/datatables-simple-demo.js"></script>
         </body>
     );
 };
 
 export default Pedidos;
+
 
 

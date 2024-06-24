@@ -201,9 +201,8 @@ h6 {
   align-items: center;
   justify-content: space-between;
   padding: 10px 0 10px 30px;
-  font-size: 15px;
   font-weight: 600;
-  color: #fff;
+  color: #000000;
   white-space: nowrap;
   transition: 0.3s;
 }
@@ -441,6 +440,8 @@ h6 {
   color: rgba(255, 255, 255, 0.9);
   margin: 10px 0 0 0;
   font-size: 24px;
+  position: relative;
+  z-index: 10; /* Certifica que o título esteja sobre o fundo escuro */
 }
 
 #hero .icon-box {
@@ -496,6 +497,8 @@ h6 {
     line-height: 24px;
   }
 }
+
+
 
 /*--------------------------------------------------------------
 # Sections General
@@ -754,4 +757,62 @@ section {
   text-align: center;
   font-size: 13px;
   color: #fff;
+}
+
+#header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#navbar {
+  flex-grow: 1;
+}
+
+#navbar ul {
+  display: flex;
+  justify-content: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+#navbar ul li {
+  margin: 0 15px; /* Ajuste a margem conforme necessário */
+}
+
+#navbar ul li a {
+  text-decoration: none;
+  color: #ffffff; /* Ajuste a cor conforme necessário */
+}
+
+#navbar ul li a.active {
+  font-weight: bold;
+}
+
+.bi-cart4 {
+  margin-left: 15px; /* Ajuste conforme necessário */
+}
+
+.logo img {
+  max-height: 50px; /* Ajuste conforme necessário */
+}
+
+.get-started-btn {
+  margin-left: 15px; /* Ajuste conforme necessário */
+}
+
+.bc-logo {
+  font-size: 33rem; /* Ajuste este valor conforme necessário */
+  font-weight: bold; /* Opcional: aumenta a espessura da fonte */
+  color: #000; /* Ajuste a cor conforme necessário */
+}
+
+.centered-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white; /* Garante que o texto seja branco */
+  text-decoration: none; /* Remove decoração de link, se necessário */
 }

@@ -10,6 +10,9 @@ import Contato from '../pages/contato/contato';
 import LoginAdm from '../adm/pages/login/loginAdm';
 import CardapioAdm from '../adm/pages/cardapio/cardapioAdm';
 import Pedidos from '../adm/pages/home/homeAdm';
+import OrderSummary from '../pages/cart/orderSummary';
+import Historico from '../adm/pages/historico';
+import PedidosUsu from '../pages/pedidos/pedidos';
 
 
 const RouterConfig = createBrowserRouter([
@@ -25,6 +28,9 @@ const RouterConfig = createBrowserRouter([
             { path: '/adm', element:<LoginAdm/>},
             { path: '/cardapioAdm', element:<CardapioAdm/>},
             { path: '/homeAdm', element:<Pedidos/>},
+            {path: '/orderSummary/:orderId', element:<OrderSummary/>},
+            {path: "/historico", element:<Historico/>},
+            {path: "/pedidos1", element:<PedidosUsu/>},
 
 
         ]

@@ -1,13 +1,15 @@
-import React, {useState, useEffect, useContext} from 'react';
-import { FaCartPlus, FaHeart } from 'react-icons/fa';
+import React, { useState, useEffect, useContext } from 'react';
+import { FaCartPlus } from 'react-icons/fa';
 import { db } from '../../services/firebase';
 import { collection, getDocs } from "firebase/firestore";
-import {CartContext} from "../../contexts/cart_provider";
+import { CartContext } from "../../contexts/cart_provider";
+import { useNavigate } from 'react-router-dom'; // Importe useNavigate
 
 const Cardapio = () => {
   const [items, setItems] = useState([]);
   const [hoveredItems, setHoveredItems] = useState([]);
   const { addProducToCart } = useContext(CartContext);
+  const navigate = useNavigate(); // Hook para navegação programática
 
   const handleMouseEnter = (itemId) => {
     setHoveredItems((prevItems) => [...prevItems, itemId]);
@@ -19,6 +21,17 @@ const Cardapio = () => {
 
   const isHovered = (itemId) => {
     return hoveredItems.includes(itemId);
+  };
+
+  const addToCart = (item) => {
+    if (!localStorage.getItem('user')) {
+      // Verificar se o usuário está logado
+      navigate('/login'); // Redirecionar para a página de login se não estiver logado
+      return;
+    }
+
+    // Se estiver logado, adicionar ao carrinho
+    addProducToCart(item);
   };
 
   useEffect(() => {
@@ -35,8 +48,9 @@ const Cardapio = () => {
   }, []);
 
   return (
-    <section className="mx-5">
-      <h2 className="text-center mb-4">Cardápio</h2>
+    <section id='hero' className="px-5">
+      <br />
+      <h2 className="text-center text-light mb-4">Cardápio</h2>
       <div className="row">
         {items.length > 0 ? (
           items.map(item => (
@@ -57,7 +71,6 @@ const Cardapio = () => {
                     <div className="card-body">
                       <h5 className="card-title d-flex justify-content-between align-items-center">
                         {item.title}
-                        <FaHeart color='red' />
                       </h5>
                       <p style={{ borderBottom: '1px solid #ccc' }} className="card-text">
                         {item.description}
@@ -73,7 +86,7 @@ const Cardapio = () => {
                         color={isHovered(item.id) ? "#ffc451" : "#000"}
                         onMouseEnter={() => handleMouseEnter(item.id)}
                         onMouseLeave={() => handleMouseLeave(item.id)}
-                        onClick={() => addProducToCart(item)}
+                        onClick={() => addToCart(item)} // Chama a função addToCart ao clicar
                       />
                     </div>
                   </div>
