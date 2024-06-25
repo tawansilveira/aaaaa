@@ -118,7 +118,13 @@ h6 {
   transition: all 0.5s;
   z-index: 997;
   padding: 15px 0;
+  transition: background-color 0.3s;
 }
+
+#header.scrolled {
+  background-color: #343a40; /* Dark background color */
+}
+
 
 #header.header-scrolled,
 #header.header-inner-pages {

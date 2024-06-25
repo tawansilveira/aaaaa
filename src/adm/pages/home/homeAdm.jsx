@@ -1,8 +1,7 @@
-// Pedidos.js
 import React, { useState, useEffect } from 'react';
 import { FaCartPlus, FaHeart } from 'react-icons/fa';
 import { db, auth } from '../../../services/firebase'; // Ensure you have auth configured in your firebase service
-import { collection, doc, getDocs, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, addDoc, updateDoc, onSnapshot, query, where, getDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth'; // Import signOut from firebase/auth
 import './scripts.js';
 import './stylesa.css';
@@ -25,67 +24,61 @@ const Pedidos = () => {
     };
 
     useEffect(() => {
-        const getPedidos = async () => {
-            try {
-                const querySnapshot = await getDocs(collection(db, "orders"));
-                const fetchedItems = querySnapshot.docs.map((doc) => ({
-                    ...doc.data(),
-                    id: doc.id,
-                }));
+        const ordersQuery = query(collection(db, "orders"), where("status", "!=", "Finalizado"));
+        const unsubscribe = onSnapshot(ordersQuery, (querySnapshot) => {
+            const fetchedItems = querySnapshot.docs.map((doc) => ({
+                ...doc.data(),
+                id: doc.id,
+            }));
     
-                // Separate items based on their status
-                const newItems = fetchedItems.filter(item => item.status !== 'Finalizado');
-                const ongoingItems = fetchedItems.filter(item => item.status === 'Em Andamento');
+            // Separate items based on their status
+            const newItems = fetchedItems.filter(item => item.status !== 'Em Andamento');
+            const ongoingItems = fetchedItems.filter(item => item.status === 'Em Andamento');
     
-                setItems(newItems);
-                setOngoingItems(ongoingItems);
-            } catch (error) {
-                console.error("Error fetching orders: ", error);
-            }
-        };
+            // Sort items by createdAt in descending order
+            newItems.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+            ongoingItems.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
     
-        getPedidos();
+            setItems(newItems);
+            setOngoingItems(ongoingItems);
+        }, (error) => {
+            console.error("Error fetching orders: ", error);
+        });
+    
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
     }, []);
     
+    
 
-const handleConfirmReceipt = async (orderId) => {
-    try {
-        // Update the status in Firestore
-        const orderDoc = doc(db, "orders", orderId);
-        await updateDoc(orderDoc, { status: 'Em Andamento' });
+    const handleConfirmReceipt = async (orderId) => {
+        try {
+            // Update the status in Firestore
+            const orderDoc = doc(db, "orders", orderId);
+            await updateDoc(orderDoc, { status: 'Em Andamento' });
 
-        // Update the local state
-        setItems((prevItems) => prevItems.filter((item) => item.id !== orderId));
-        const item = items.find((item) => item.id === orderId);
-        setOngoingItems((prevOngoingItems) => [...prevOngoingItems, { ...item, status: 'Em Andamento' }]);
-    } catch (error) {
-        console.error("Error updating order status: ", error);
-    }
-};
-
+            // No need to update local state, as onSnapshot will handle it
+        } catch (error) {
+            console.error("Error updating order status: ", error);
+        }
+    };
 
     const handleFinalizeOrder = async (orderId) => {
-        setOngoingItems((prevOngoingItems) => {
-            const item = prevOngoingItems.find((item) => item.id === orderId);
-            if (item) {
-                // Add the item to the "histórico" collection in Firestore
-                addDoc(collection(db, "historico"), item);
-
-                // Remove the item from ongoingItems
-                return prevOngoingItems.filter((item) => item.id !== orderId);
-            }
-            return prevOngoingItems;
-        });
-
         try {
-            // Remove the item from "orders" collection in Firestore
             const orderDoc = doc(db, "orders", orderId);
+            const orderSnapshot = await getDoc(orderDoc);
+            const item = orderSnapshot.data();
+
+            // Add the item to the "historico" collection in Firestore
+            await addDoc(collection(db, "historico"), item);
+
+            // Update the status in Firestore
             await updateDoc(orderDoc, { status: 'Finalizado' });
+
+            // No need to update local state, as onSnapshot will handle it
         } catch (error) {
             console.error("Error finalizing order: ", error);
         }
-
-        console.log(`Finalizing order ${orderId}`);
     };
 
     const handleLogout = async () => {
@@ -244,6 +237,3 @@ const handleConfirmReceipt = async (orderId) => {
 };
 
 export default Pedidos;
-
-
-

@@ -2,12 +2,13 @@ import { Link, NavLink } from 'react-router-dom';
 import Avatar from 'react-avatar';
 import Dropdown from 'react-bootstrap/Dropdown';
 import { auth } from '../services/firebase';
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { CartContext } from "../contexts/cart_provider"; // Import CartContext
-import '../assets/css/style.css'
+import '../assets/css/style.css';
 
 const NavBar = ({ toggleNavbarVisibility }) => {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false); // State to track scroll position
   const { productsCart } = useContext(CartContext); // Use CartContext
 
   const toggleDropdownMenu = () => setShowDropdown(!showDropdown);
@@ -17,9 +18,25 @@ const NavBar = ({ toggleNavbarVisibility }) => {
   // Calculate total items in cart
   const totalItemsInCart = productsCart.reduce((total, item) => total + item.qtdCarrinho, 0);
 
+  // Function to handle scroll event
+  const handleScroll = () => {
+    if (window.scrollY > 50) {
+      setIsScrolled(true);
+    } else {
+      setIsScrolled(false);
+    }
+  };
+
+  // Add scroll event listener on mount
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   return (
-    <header id="header" className="fixed-top">
+    <header id="header" className={`fixed-top ${isScrolled ? 'scrolled' : ''}`}>
       <nav className="navbar navbar-expand-lg navbar-dark">
         <div className="container d-flex align-items-center justify-content-lg-between">
           <h1 className="logo me-auto me-lg-0 bc-logo">
